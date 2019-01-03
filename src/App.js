@@ -3,8 +3,8 @@ import logo from './logo.svg';
 import './App.css';
 
 import Background from './Background.js';
-import TextFileReader from './TextFileReader.js';
-var LogFile = require("./Assets_log.txt");
+import logJSON from './log.json';
+import { debug } from 'util';
 
 const styles = {
   population: {
@@ -17,7 +17,7 @@ const styles = {
   },
   individual: {
     border: "solid 1px white",
-    backgroundColor: "#5053A3",
+    backgroundColor: "#FF686F",
     fontSize: "24px",
     margin: "8px",
     padding: "24px",
@@ -26,14 +26,18 @@ const styles = {
   },
   elite: {
     border: "solid 1px white",
-    backgroundColor: "green",
+    backgroundColor: "#96FF49",
     fontSize: "24px",
     margin: "8px",
     padding: "24px",
     minWidth: "65px",
     textAlign: "center",
-  }
-
+  },
+  mutated: {
+    fontSize: "12px",
+    color: "black",
+    fontWeight: "bold",
+  },
 }
 
 class App extends Component {
@@ -41,47 +45,20 @@ class App extends Component {
   constructor(props) {
     super(props);
 
-    this.readData = this.readData.bind(this);
     this.renderMap = this.renderMap.bind(this);
     this.renderPopulation = this.renderPopulation.bind(this);
 
-    this.state = {
-      nIndividualsPerGeneration: 0,
-      nElite: 0,
-      populations: [],
-    };
-  }
-
-  readData(data) {
-    var lines = data.split('\n');
-    var populations = [];
-    var nPopulation = -1;
-
-    for (var i = 2; i < lines.length; i++) {
-      if ((i - 2) % parseInt(lines[0]) == 0) {
-        nPopulation++;
-        populations[nPopulation] = { individuals: [], index: nPopulation };
-      }
-
-      if (lines[i] == "") {
-        continue;
-      }
-
-      populations[nPopulation].individuals[i - 2 - lines[0] * nPopulation] = { fitness: lines[i] };
-    }
-
-    this.setState({
-      nIndividualsPerGeneration: parseInt(lines[0]),
-      nElite: parseInt(lines[1]),
-      populations: populations,
-    })
+    this.state = logJSON;
   }
 
   renderPopulation(population) {
     return (
       population.individuals.map((individual, i) => (
-        < div key={i} style={(i < this.state.nElite) ? styles.elite : styles.individual}>
-          {individual.fitness}
+        < div key={i} style={(individual.wasElite) ? styles.elite : styles.individual}>
+          {individual.fitness.toFixed(2)}
+          {individual.wasMutated &&
+            <div style={styles.mutated}>M</div>
+          }
         </div >
       ))
     )
@@ -98,7 +75,6 @@ class App extends Component {
   }
 
   render() {
-
     console.log(this.state);
 
     return (
@@ -108,11 +84,6 @@ class App extends Component {
         />
 
         {this.renderMap()}
-
-        <TextFileReader
-          txt={LogFile}
-          readData={this.readData}
-        />
       </div>
     );
   }
